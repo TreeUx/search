@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+    </style>
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=3jkpsQONO1TMU6ZIn36SajqClVd4Uk5M"></script>
+    <script src="../static/mapAnimate.js"></script>
+    <script src="../static/search.js"></script>
+    <title>地图展示</title>
+</head>
+<body>
+<div id="allmap"></div>
+</body>
+</html>
+<script type="text/javascript">
+    // 百度地图API功能
+    var map = new BMap.Map("allmap");    // 创建Map实例
+    map.centerAndZoom(new BMap.Point(116.404, 39.915), 17);  // 初始化地图,设置中心点坐标和地图级别
+    //添加地图类型控件
+    map.addControl(new BMap.MapTypeControl({
+        mapTypes:[
+            BMAP_NORMAL_MAP,
+            BMAP_HYBRID_MAP
+        ]}));
+    map.setCurrentCity("北京");          // 设置地图显示的城市 此项是必须设置的
+    map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+
+    /*监听鼠标事件 Start*/
+    var bl_flag; //判断是否长按鼠标
+    var m = document.getElementById('allmap'); //获取地图元素
+    map.addEventListener("mousemove", function (e) {//设置鼠标移动过程中监听事件
+        //参数：每一层播放的间隔时间、每一层扩散至最大所花费的总时间。
+        //半径、层数、中心点、{填充颜色、初始透明度}
+        //鼠标按下
+        m.onmousedown = function () {//down向下
+            bl_flag = false //判断是否长按鼠标获取坐标点
+            //参数：每一层播放的间隔时间、每一层扩散至最大所花费的总时间。
+            //半径、层数、中心点、{填充颜色、初始透明度}
+            if (event.button == 0) { //判断点击鼠标左键(event.button==0是点击了左键，event.button==2是点击了右键)
+                timeStart = getTimeNow();//获取鼠标按下时的时间
+                circles1 = new CircleShow(radius, 4, new BMap.Point(e.point.lng, e.point.lat), {
+                    fillColor: 'red',
+                    fillOpacity: 0.8
+                });
+                //参数：每一层播放的间隔时间、每一层扩散至最大所花费的总时间。
+                time = setInterval(function () { //setInterval会每550毫秒执行一次
+                    timeEnd = getTimeNow();//也就是每550毫秒获取一次时间
+                    if (timeEnd - timeStart > 550) { //如果此时检测到的时间与第一次获取的时间差有600毫秒
+                        clearInterval(time);//便不再继续重复此函数 （clearInterval取消周期性执行）
+                        map.addEventListener("dragstart", function () { //监听地图开始拖拽事件
+                            bl_drag = true
+                            console.log("地图被拖拽")
+                        })
+                        map.addEventListener("dragend", function () { //监听地图结束拖拽事件
+                            bl_drag = false
+                            console.log("地图拖拽结束")
+                        })
+                        if (!bl_drag) { //此处代码在拖拽结束的监听事件之前被执行
+                            console.log("展示水波圆")
+                            circles1.start(500, 1500); //水波圆开始
+                        }
+                        bl_flag = true //判断是否长按鼠标获取坐标点
+                    }
+                }, 600);
+            }
+        }
+        //鼠标抬起
+        m.onmouseup = function () {//up向上
+            console.log('鼠标抬起来啦');
+            // circles1.stop() //停止水波
+            if (event.button == 0) { //判断点击鼠标左键
+                if (bl_flag) {
+                    console.log("进入长按采点 Start")
+                }
+                circles1.remove() //移除
+            }
+        }
+    })
+    /*监听鼠标事件 End*/
+</script>
